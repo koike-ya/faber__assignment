@@ -18,7 +18,26 @@ def save_file(url, save_path):
     
 def extract_file(file_path, save_path):
     with tarfile.open(file_path, 'r') as tf:
-        tf.extractall(save_path)
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(tf, save_path)
 
 def make_corpus(data_dir):
     corpus = {'data': [], 'label': [], 'label_names': []}
